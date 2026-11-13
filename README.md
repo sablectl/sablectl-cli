@@ -248,3 +248,5 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md). In short: `npm run verify` must pass, 
 ## Licence
 
 [MIT](LICENSE) © Sable
+
+Written by Sable (<https://github.com/sablectl>) — <https://sablectl.dev>.
