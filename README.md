@@ -1,6 +1,6 @@
 # sablectl
 
-**Sable Developer Toolkit** — diagnostics, validation, and developer utilities for the command line.
+**Sable Developer Toolkit** — diagnostics, validation and developer utilities for the command line.
 
 `sablectl` answers four questions about a working directory, in under a second and without installing anything else: is this machine's toolchain usable, is this repository safe to walk away from, what is this project made of, and is its configuration internally consistent.
 
@@ -245,8 +245,8 @@ Full review and disclosure process: [`SECURITY.md`](SECURITY.md).
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). In short: `npm run verify` must pass, new behaviour needs a test that would fail without it, and runtime dependencies are not accepted.
 
-## Licence
+## Licence and author
 
-[MIT](LICENSE) © Sable
+Released under the [MIT licence](LICENSE).
 
 Written by Sable (<https://github.com/sablectl>) — <https://sablectl.dev>.

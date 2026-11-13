@@ -1,7 +1,7 @@
 {
   "name": "sablectl",
   "version": "1.0.0",
-  "description": "Sable Developer Toolkit — diagnostics, validation, and developer utilities for the command line.",
+  "description": "Sable Developer Toolkit — diagnostics, validation and developer utilities for the command line.",
   "type": "module",
   "license": "MIT",
   "author": "Sable <355646062+sablectl@users.noreply.github.com>",
