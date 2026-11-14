@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- Human-readable output now escapes C0 and C1 control characters, DEL and the
+  Unicode bidirectional overrides before printing. Branch names, remote URLs,
+  commit subjects and directory names are attacker-controlled in a hostile
+  repository and could previously rewrite lines already printed to the
+  terminal. JSON output is unchanged.
+
+### Changed
+
+- `minimatch` is pinned to `^11.0.1` through an override, resolving a moderate
+  advisory reached through the ESLint toolchain. Development dependencies only;
+  the published package still has no runtime dependencies.
+
 ## [1.0.0] — 2026-11-12
 
 First stable release.
