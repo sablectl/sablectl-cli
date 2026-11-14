@@ -1,4 +1,5 @@
 import { type CheckStatus, type Report, tally } from '../check.js';
+import { escapeControlCharacters } from './escape.js';
 import { paint, statusLabel, type OutputStyle } from './style.js';
 
 /**
@@ -7,18 +8,23 @@ import { paint, statusLabel, type OutputStyle } from './style.js';
  * Purity matters here. Both renderers are tested against identical report
  * fixtures, so the text and JSON views cannot drift apart, and a renderer
  * bug cannot be hidden by whatever the live system happened to return.
+ *
+ * Report text carries values collected from the environment — branch names,
+ * remote URLs, commit subjects, directory names — so every such string is
+ * escaped here, at the single choke point for terminal output, before any
+ * colour code of our own is added.
  */
 export function renderHuman(report: Report, style: OutputStyle): string {
   const lines: string[] = [];
 
   lines.push(
-    paint(style, 'bold', `sablectl ${report.command}`) +
-      paint(style, 'dim', `  v${report.version}`),
+    paint(style, 'bold', `sablectl ${safe(report.command)}`) +
+      paint(style, 'dim', `  v${safe(report.version)}`),
   );
 
   for (const section of report.sections) {
     lines.push('');
-    lines.push(paint(style, 'bold', section.title));
+    lines.push(paint(style, 'bold', safe(section.title)));
 
     if (section.results.length === 0) {
       lines.push('  (nothing to report)');
@@ -26,11 +32,15 @@ export function renderHuman(report: Report, style: OutputStyle): string {
     }
 
     for (const result of section.results) {
-      lines.push(`  ${statusLabel(style, result.status)}  ${result.title}`);
-      lines.push(`        ${result.summary}`);
+      lines.push(
+        `  ${statusLabel(style, result.status)}  ${safe(result.title)}`,
+      );
+      lines.push(`        ${safe(result.summary)}`);
 
       if (result.remediation !== undefined && result.remediation !== '') {
-        lines.push(`        ${paint(style, 'dim', `→ ${result.remediation}`)}`);
+        lines.push(
+          `        ${paint(style, 'dim', `→ ${safe(result.remediation)}`)}`,
+        );
       }
 
       if (style.verbose && result.detail !== undefined) {
@@ -46,6 +56,11 @@ export function renderHuman(report: Report, style: OutputStyle): string {
   lines.push('');
 
   return lines.join('\n');
+}
+
+/** Every untrusted string reaches the terminal through this. */
+function safe(text: string): string {
+  return escapeControlCharacters(text);
 }
 
 function summaryLine(report: Report, style: OutputStyle): string {
@@ -73,7 +88,7 @@ function summaryLine(report: Report, style: OutputStyle): string {
 function renderDetail(detail: Readonly<Record<string, unknown>>): string[] {
   const lines: string[] = [];
   for (const [key, value] of Object.entries(detail)) {
-    lines.push(`${key}: ${formatValue(value, 0)}`);
+    lines.push(`${safe(key)}: ${formatValue(value, 0)}`);
   }
   return lines;
 }
@@ -81,7 +96,7 @@ function renderDetail(detail: Readonly<Record<string, unknown>>): string[] {
 function formatValue(value: unknown, depth: number): string {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return safe(value);
   if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
   }
@@ -91,7 +106,7 @@ function formatValue(value: unknown, depth: number): string {
   }
   if (typeof value === 'object') {
     const entries = Object.entries(value).map(
-      ([key, nested]) => `${key}=${formatValue(nested, depth + 1)}`,
+      ([key, nested]) => `${safe(key)}=${formatValue(nested, depth + 1)}`,
     );
     return `{${entries.join(', ')}}`;
   }

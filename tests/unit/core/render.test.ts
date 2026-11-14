@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { worstStatus } from '../../../src/core/check.js';
+import { escapeControlCharacters } from '../../../src/core/render/escape.js';
 import { renderHuman } from '../../../src/core/render/human.js';
 import {
   JSON_SCHEMA_VERSION,
@@ -18,7 +19,7 @@ import {
   recordsAt,
   stringAt,
 } from '../../helpers/json.js';
-import { ALL_STATUSES, sampleReport } from '../../helpers/report.js';
+import { ALL_STATUSES, reportOf, sampleReport } from '../../helpers/report.js';
 
 const ESC = '\u001B';
 
@@ -189,6 +190,62 @@ describe('renderHuman', () => {
   it('shows the remediation for a failing check', () => {
     const output = renderHuman(report, resolveStyle(caps({}, false)));
     expect(output).toContain('→ Fix it.');
+  });
+});
+
+describe('terminal escaping in human output', () => {
+  const hostile = 'main\u001B[2K\rPASS  all checks';
+
+  it('neutralises terminal escape sequences in untrusted strings', () => {
+    const escaped = escapeControlCharacters(hostile);
+
+    expect(escaped).not.toContain(ESC);
+    expect(escaped).not.toContain('\r');
+    expect(escaped).toContain('\\x1b');
+  });
+
+  it('escapes bidirectional overrides used to disguise identifiers', () => {
+    expect(escapeControlCharacters('feature\u202Egnp.exe')).toContain(
+      '\\u202e',
+    );
+  });
+
+  it('leaves ordinary unicode readable', () => {
+    expect(escapeControlCharacters('日本語 — ümlaut')).toBe('日本語 — ümlaut');
+  });
+
+  it('escapes a hostile branch name before it reaches the terminal', () => {
+    const output = renderHuman(
+      reportOf([
+        {
+          id: 'git.branch',
+          title: hostile,
+          status: 'pass',
+          summary: `remote \u202E${hostile}`,
+          detail: { branch: hostile },
+          remediation: hostile,
+        },
+      ]),
+      resolveStyle(caps({}, false), { verbose: true }),
+    );
+
+    expect(output).not.toContain(ESC);
+    expect(output).not.toContain('\r');
+    expect(output).not.toContain('\u202E');
+    expect(output).toContain('main\\x1b[2K\\x0dPASS  all checks');
+    expect(output).toContain('\\u202e');
+  });
+
+  it('does not escape the colour codes the renderer itself emits', () => {
+    const output = renderHuman(
+      reportOf([
+        { id: 'c.pass', title: 'Passing', status: 'pass', summary: 'fine' },
+      ]),
+      resolveStyle(caps({}, true)),
+    );
+
+    expect(output).toContain(ESC);
+    expect(output).not.toContain('\\x1b');
   });
 });
 
